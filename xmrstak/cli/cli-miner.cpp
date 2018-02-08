@@ -72,7 +72,7 @@ void help()
 	cout<<"  --noUAC               disable the UAC dialog"<<endl;
 #endif
 #if (!defined(CONF_NO_AEON)) && (!defined(CONF_NO_MONERO))
-	cout<<"  --currency NAME       currency to mine: monero or aeon"<<endl;
+	cout<<"  --currency NAME       currency to mine: monero, turtle, or aeon"<<endl;
 #endif
 #ifndef CONF_NO_CPU
 	cout<<"  --noCPU               disable the CPU miner backend"<<endl;
@@ -162,8 +162,8 @@ std::string get_multipool_entry(bool& final)
 
 	final = !read_yes_no("- Do you want to add another pool? (y/n)");
 
-	return "\t{\"pool_address\" : \"" + pool +"\", \"wallet_address\" : \"" + userName +  "\", \"pool_password\" : \"" + 
-		passwd + "\", \"use_nicehash\" : " + bool_to_str(nicehash) + ", \"use_tls\" : " + bool_to_str(tls) + 
+	return "\t{\"pool_address\" : \"" + pool +"\", \"wallet_address\" : \"" + userName +  "\", \"pool_password\" : \"" +
+		passwd + "\", \"use_nicehash\" : " + bool_to_str(nicehash) + ", \"use_tls\" : " + bool_to_str(tls) +
 		", \"tls_fingerprint\" : \"\", \"pool_weight\" : " + std::to_string(pool_weight) + " },\n";
 }
 
@@ -188,7 +188,7 @@ void do_guided_config()
 	configEditor configTpl{};
 	configTpl.set(std::string(tpl));
 	bool prompted = false;
-	
+
 	auto& currency = params::inst().currency;
 	if(currency.empty())
 	{
@@ -200,12 +200,12 @@ void do_guided_config()
 #elif defined(CONF_NO_MONERO)
 		tmp = "aeon";
 #endif
-		while(tmp != "monero" && tmp != "aeon")
+		while(tmp != "monero" && tmp != "aeon" && tmp != "turtle")
 		{
-			std::cout<<"- Currency: 'monero' or 'aeon'"<<std::endl;
+			std::cout<<"- Currency: 'monero' or 'aeon' or 'turtle'"<<std::endl;
 			std::cin >> tmp;
 			std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
-		} 
+		}
 		currency = tmp;
 	}
 
@@ -216,7 +216,7 @@ void do_guided_config()
 		prompt_once(prompted);
 
 		userSetPool = false;
-		if(currency == "monero")
+		if(currency == "monero" || currency == "turtle")
 			std::cout<<"- Pool address: e.g. pool.usxmrpool.com:3333"<<std::endl;
 		else
 			std::cout<<"- Pool address: e.g. mine.aeon-pool.com:5555"<<std::endl;
@@ -577,7 +577,11 @@ int main(int argc, char *argv[])
 	printer::inst()->print_str("'c' - connection\n");
 	printer::inst()->print_str("-------------------------------------------------------------------\n");
 	if(::jconf::inst()->IsCurrencyMonero())
-		printer::inst()->print_msg(L0,"Start mining: MONERO");
+    {
+        std::string ucCurrency = jconf::inst()->GetCurrency();
+        std::transform(ucCurrency.begin(), ucCurrency.end(), ucCurrency.begin(), ::toupper);
+        printer::inst()->print_msg(L0, "Start mining: - %s", ucCurrency);
+    }
 	else
 		printer::inst()->print_msg(L0,"Start mining: AEON");
 
